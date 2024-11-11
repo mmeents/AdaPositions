@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blockfrost.Api" Version="1.0.1" />
+    <PackageReference Include="CardanoSharp.CBOR" Version="0.1.0" />
+    <PackageReference Include="CardanoSharp.Chaos" Version="0.1.0" />
+    <PackageReference Include="CardanoSharp.Wallet" Version="5.1.0" />
+    <PackageReference Include="MessagePack" Version="2.5.187" />
+    <PackageReference Include="MessagePack.Annotations" Version="2.5.187" />
+    <PackageReference Include="MessagePackAnalyzer" Version="2.5.187">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="PeterO.Numbers" Version="1.8.2" />
+    <PackageReference Include="PeterO.URIUtility" Version="1.0.0" />
+    <PackageReference Include="Polly" Version="8.4.2" />
+    <PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AdaPositions.Core\AdaPositions.Core.csproj" />
+  </ItemGroup>
+
+</Project>
