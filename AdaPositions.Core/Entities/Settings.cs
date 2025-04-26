@@ -7,7 +7,13 @@ using System.Threading.Tasks;
 
 namespace AdaPositions.Core.Entities {
 
-  public class Settings : ConcurrentDictionary<string, SettingProperty> {
+    public static class SettingCol
+    {
+        public static string BlockFrostApiKey { get { return "BlockFrostApiKey"; } }
+        public static string ApiKeyVerified { get { return "ApiKeyVerified"; } }
+    }
+
+    public class Settings : ConcurrentDictionary<string, SettingProperty> {
     private readonly object _lock = new object();
 
     public Settings() : base() { }

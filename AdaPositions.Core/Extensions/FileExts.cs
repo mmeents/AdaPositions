@@ -1,5 +1,8 @@
-﻿using System;
+﻿using AdaPositions.Core.Entities.Assets;
+using MessagePack;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +13,8 @@ namespace AdaPositions.Core.Extensions {
     public const string CommonPathAdd = "\\PrompterFiles";
     public const string SettingsAdd = "\\AdaPositionsSettings.sft";
     public const string SettingsAddTest = "\\AdaPositionsSettingsTest.sft";
+    public const string AssetsAdd = "\\AdaPositionsAssets.msgpk";
+    public const string StakeAddressAdd = "\\AdaPositionsStakeAddress.sft";
     public static string DefaultPath {
       get {
         var DefaultDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + FileExts.CommonPathAdd;
@@ -21,6 +26,9 @@ namespace AdaPositions.Core.Extensions {
     }
     public static string SettingsFileName { get { return DefaultPath + SettingsAdd; } }
     public static string SettingsTestFileName { get { return DefaultPath + SettingsAddTest; } }
+    public static string AssetsFileName { get { return DefaultPath + AssetsAdd; } }
+    public static string StakeAddressFileName { get { return DefaultPath + StakeAddressAdd; } }
+
 
     /// <summary>
     /// async read file from file system into string
@@ -44,6 +52,24 @@ namespace AdaPositions.Core.Extensions {
         await streamWriter.WriteAsync(Content);
       }
       return 1;
+    }
+
+   
+
+    public static string AsStr1P(this decimal x) {
+      return String.Format(CultureInfo.InvariantCulture, "{0:0.0}", x);
+    }
+    
+
+
+    public static long AsLong(this string s) {
+      long result = 0;
+      if (!long.TryParse(s, out result)) {
+        if (decimal.TryParse(s, out decimal d)) {
+          result = Convert.ToInt64(d);
+        }
+      }
+      return result;
     }
 
   }

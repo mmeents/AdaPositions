@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace AdaPositions.Core.Interfaces {
   public interface ILogMsg {
     void LogMsg(string msg);
+    void DrawStats(string msg);
   }
 
 }
