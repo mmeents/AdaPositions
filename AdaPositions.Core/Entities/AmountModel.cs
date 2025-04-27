@@ -73,6 +73,7 @@ namespace AdaPositions.Core.Entities {
     public void Add(AmountModel item) {
       lock (_lock) {
         if (item.Id == 0) {
+
           var existingAmount = this.Values.FirstOrDefault(x => x.Unit == item.Unit);
           if (existingAmount != null) { 
             long quantity = item.Quantity.AsLong();
@@ -85,6 +86,18 @@ namespace AdaPositions.Core.Entities {
         } else {
           base[item.Id] = item;
         }        
+      }
+    }
+
+    public string GetTotalAda() {
+      lock (_lock) {
+        decimal total = 0;
+        foreach (var item in base.Values) {
+          if (item.Unit == "lovelace") {
+            total += item.Quantity.AsLong() / 1000000m;
+          }
+        }
+        return string.Format("{0:F6}", total);
       }
     }
 
@@ -121,9 +134,8 @@ namespace AdaPositions.Core.Entities {
       }
     }
 
-
-
-
-
   }
+
+
+
 }

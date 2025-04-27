@@ -72,5 +72,15 @@ namespace AdaPositions.Core.Extensions {
       return result;
     }
 
+    public static string SanitizeUnit(this string input) {
+      if (string.IsNullOrEmpty(input)) return string.Empty;
+
+      // Remove non-printable characters
+      var sanitized = new string(input.Where(c => !char.IsControl(c)).ToArray());
+
+      // Optionally, trim leading/trailing whitespace
+      return sanitized.Trim();
+    }
+
   }
 }

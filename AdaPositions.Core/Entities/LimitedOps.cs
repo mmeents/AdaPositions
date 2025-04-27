@@ -87,7 +87,7 @@ namespace AdaPositions.Core.Entities {
             break;
           case Ot.GetStakeAddresses:
             if (ToDo.StrOpParam1 != null) {
-              Owner.Owner.GetAddAddressByStakeFromBlockfrost(ToDo.StrOpParam1, null, ToDo.PageNumber);            
+              //Owner.Owner.GetAddAddressByStakeFromBlockfrost(ToDo.StrOpParam1, null, ToDo.PageNumber);            
               bool hasMore = Owner.Owner.GetAddAddressByStakeFromBlockfrost(ToDo.StrOpParam1, null, ToDo.PageNumber);
               if (hasMore) Owner.Owner.ScheduleToDo(ToDo.Optype, ToDo.StrOpParam1, null, ToDo.PageNumber + 1);            
             }

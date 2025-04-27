@@ -47,8 +47,8 @@
       cmsTvExplore = new ContextMenuStrip(components);
       miResyncAssets = new ToolStripMenuItem();
       miGetAddressesForStake = new ToolStripMenuItem();
-      miResyncStake = new ToolStripMenuItem();
-      miResync = new ToolStripMenuItem();
+      miResyncStakeAddr = new ToolStripMenuItem();
+      miResyncTotals = new ToolStripMenuItem();
       miRemove = new ToolStripMenuItem();
       imageList1 = new ImageList(components);
       tbMain = new TextBox();
@@ -326,7 +326,7 @@
       // cmsTvExplore
       // 
       cmsTvExplore.ImageScalingSize = new Size(20, 20);
-      cmsTvExplore.Items.AddRange(new ToolStripItem[] { miResyncAssets, miGetAddressesForStake, miResyncStake, miResync, miRemove });
+      cmsTvExplore.Items.AddRange(new ToolStripItem[] { miResyncAssets, miGetAddressesForStake, miResyncStakeAddr, miResyncTotals, miRemove });
       cmsTvExplore.Name = "cmsTvExplore";
       cmsTvExplore.Size = new Size(224, 152);
       cmsTvExplore.Opening += cmsTvExplore_Opening;
@@ -345,19 +345,19 @@
       miGetAddressesForStake.Text = "Get All Addr for Stake";
       miGetAddressesForStake.Click += miGetAddressesForStake_Click;
       // 
-      // miResyncStake
+      // miResyncStakeAddr
       // 
-      miResyncStake.Name = "miResyncStake";
-      miResyncStake.Size = new Size(223, 24);
-      miResyncStake.Text = "Resync Stake";
-      miResyncStake.Click += miResyncStake_Click;
+      miResyncStakeAddr.Name = "miResyncStakeAddr";
+      miResyncStakeAddr.Size = new Size(223, 24);
+      miResyncStakeAddr.Text = "Resync Stakes Addr";
+      miResyncStakeAddr.Click += miResyncStakeAddr_Click;
       // 
-      // miResync
+      // miResyncTotals
       // 
-      miResync.Name = "miResync";
-      miResync.Size = new Size(223, 24);
-      miResync.Text = "Resync Totals";
-      miResync.Click += miResync_Click;
+      miResyncTotals.Name = "miResyncTotals";
+      miResyncTotals.Size = new Size(223, 24);
+      miResyncTotals.Text = "Resync Totals";
+      miResyncTotals.Click += miResyncTotals_Click;
       // 
       // miRemove
       // 
@@ -394,8 +394,10 @@
       tbMain.Margin = new Padding(3, 4, 3, 4);
       tbMain.Multiline = true;
       tbMain.Name = "tbMain";
+      tbMain.ScrollBars = ScrollBars.Both;
       tbMain.Size = new Size(366, 475);
       tbMain.TabIndex = 0;
+      tbMain.WordWrap = false;
       // 
       // tpLog
       // 
@@ -403,7 +405,7 @@
       tpLog.Location = new Point(4, 29);
       tpLog.Margin = new Padding(3, 4, 3, 4);
       tpLog.Name = "tpLog";
-      tpLog.Size = new Size(808, 542);
+      tpLog.Size = new Size(808, 541);
       tpLog.TabIndex = 2;
       tpLog.Text = "Log";
       tpLog.UseVisualStyleBackColor = true;
@@ -415,7 +417,7 @@
       tbLog.Margin = new Padding(3, 4, 3, 4);
       tbLog.Multiline = true;
       tbLog.Name = "tbLog";
-      tbLog.Size = new Size(808, 542);
+      tbLog.Size = new Size(808, 541);
       tbLog.TabIndex = 0;
       // 
       // lbTrackBarValue
@@ -526,9 +528,9 @@
     private TreeView tvExplore;
     private ContextMenuStrip cmsTvExplore;
     private ToolStripMenuItem miGetAddressesForStake;
-    private ToolStripMenuItem miResyncStake;
+    private ToolStripMenuItem miResyncStakeAddr;
     private ImageList imageList1;
-    private ToolStripMenuItem miResync;
+    private ToolStripMenuItem miResyncTotals;
     private ToolStripMenuItem miRemove;
     private Label lbRateTotals;
     private TrackBar trackBar1;

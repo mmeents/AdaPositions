@@ -112,6 +112,7 @@ namespace AdaPositions.Core.Services {
       }
       addresses.Add(NewAddress);
       Package.Addresses = addresses.AsList;
+      _form1.LogMsg($"id: {NewAddress.Id} AddAddress: {NewAddress.Address} stakeId: {NewAddress.StakeAddressModelId}");
 
     }
 
@@ -120,6 +121,7 @@ namespace AdaPositions.Core.Services {
       var allAmounts = new Amounts(Package.AddressAmounts);
 
       var am = addresses.AddressModel(address.Address);
+      _form1.LogMsg($"RemoveAddress: {address.Address} stakeId: {address.StakeAddressModelId}");
       if (am == null) return;      
       am.AddressAmounts.ToList().ForEach(x => {        
         allAmounts.Remove(x.Value.Id);
@@ -176,10 +178,27 @@ namespace AdaPositions.Core.Services {
         var tnStake = new TreeNode(x.Value.StakeAddress, (int)II.StakeAddress, (int)II.StakeAddress);
         _StakesNode.Nodes.Add(tnStake);
         x.Value.Addresses!.ToList().ForEach(y => {
-          if (IncludeEmptyAddr || y.Value.AddressAmounts.Any()) {
-            var tnAddress = new TreeNode(y.Value.Address, (int)II.Address, (int)II.Address);
-            tnStake.Nodes.Add(tnAddress);
-          }          
+          try {
+            if (IncludeEmptyAddr || y.Value.AddressAmounts.Any()) {
+              var tnAddress = new TreeNode(y.Value.Address, (int)II.Address, (int)II.Address);
+              tnStake.Nodes.Add(tnAddress);
+              y.Value.AddressAmounts.ToList().ForEach(z => {
+                try {
+                  var asset = _assetsService!.Assets.FindByUnit(z.Value.Unit);
+                  string assetName = z.Value.Unit;
+                  if (asset != null) {
+                    assetName = asset.AssetName.AsHexToUtf8();
+                  }
+                  var tnAmount = new TreeNode(assetName, (int)II.Amount, (int)II.Amount);
+                  tnAddress.Nodes.Add(tnAmount);
+                } catch (Exception ex) {
+                  _form1.LogMsg($"Error inner: {ex.Message}");
+                }
+              });
+            }
+          } catch (Exception ex) {
+            _form1.LogMsg($"Error outer: {ex.Message}");
+          }                    
         });
       });
       TreeViewComponent.Nodes.Add(_AssetsNode);
@@ -207,6 +226,7 @@ namespace AdaPositions.Core.Services {
       var resp = Task.Run( async () => await _blockfrostService.GetAccountAddressesAsync(stakeAddress, pageNumber).ConfigureAwait(false)).GetAwaiter().GetResult();
       bool hasMore = resp.Count == 100;
       if (resp != null) {
+        _form1.LogMsg($"GetAddAddressByStakeFromBlockfrost: {stakeAddress} page: {pageNumber} hasMore: {hasMore}");
         var stake = Stakes.StakeAddressModel(stakeAddress);
         if (stake != null) {
           
@@ -217,8 +237,8 @@ namespace AdaPositions.Core.Services {
                   Address = address.Address,
                   StakeAddressModelId = stake.Id
                 };
-              AddAddress(NewAddress);
-              stakeNode?.Nodes.Add(new TreeNode(address.Address, 2, 2));
+              AddAddress(NewAddress);              
+              stakeNode?.Nodes.Add(new TreeNode(address.Address, (int)II.Address, (int)II.Address));
             }
           }
 
@@ -309,6 +329,9 @@ namespace AdaPositions.Core.Services {
       Task.Run(async () => await _blockfrostService.CaptureMetrics().ConfigureAwait(false)).GetAwaiter().GetResult();            
     }
 
+    public bool HasNextToDo() {
+      return Operations.OpSchedule.Keys.Count > 0;
+    }
     public void DoNextToDo() {
       if (_blockfrostService.IsOverDailyMaxCalls) {
         _form1.LogMsg("Over daily max calls");

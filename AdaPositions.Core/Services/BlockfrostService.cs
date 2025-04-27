@@ -92,7 +92,7 @@ namespace AdaPositions.Core.Services {
     public async Task<AddressContentResponse?> GetAddressDetailsAsync(string address) {
       try {     
         _lastAccountCalls++;        
-        AddressContentResponse ACR = await AddressService!.GetAddressesAsync(address);             
+        AddressContentResponse ACR = await AddressService!.GetAddressesAsync(address); 
         
         return ACR;
 

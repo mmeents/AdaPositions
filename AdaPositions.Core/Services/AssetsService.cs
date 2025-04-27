@@ -63,13 +63,14 @@ namespace AdaPositions.Core.Services
         }
 
         public string AsFormatedQuantity(AmountModel amount) {
-          if (amount == null) return "";
+          if (amount == null) return "Null Amount";
+          var quantity = amount.Quantity.AsLong();
           var asset = _assets.FindByUnit(amount.Unit);
-          if (asset == null) return "Sync Asset Needed.";
-          var unit = amount.Unit;
-          var quantity = amount.Quantity.AsLong();          
+          if (asset == null || asset.Decimals == 0) return $"No Asset:{amount.Quantity}";      
+          
+          decimal adjustedQuantity = quantity / (decimal)Math.Pow(10, asset.Decimals);
           string fmtDecimals = $"0:F{asset.Decimals}";
-          return string.Format("{"+fmtDecimals+"}", quantity);
+          return string.Format("{"+fmtDecimals+"}", adjustedQuantity);
         }
 
   }
@@ -147,7 +148,7 @@ namespace AdaPositions.Core.Services
           for (int i = 0; i < hex.Length; i += 2)
             bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
 
-          return Encoding.UTF8.GetString(bytes);
+          return Encoding.UTF8.GetString(bytes).SanitizeUnit();
         } catch { 
           return "";
         }

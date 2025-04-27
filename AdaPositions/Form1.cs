@@ -165,13 +165,13 @@ namespace AdaPositions {
           } else {
             CountDown = MaxCountDown;
             _addressService!.DoNextToDo();
+            Processing = _addressService?.HasNextToDo() ?? false;
           }
 
           lbRateTotals.Text = (Convert.ToDecimal(CountDown / 10.0)).AsStr1P()
             + $" ToDo: {_addressService?.Operations.OpSchedule.Count() ?? 0} "
             + $" Doing: {_addressService!.Operations.Count()} "
             + $"{_addressService?.RateLimitString} ";
-
 
         } catch (Exception ex) {
           LogMsg(ex.Message);
@@ -243,32 +243,31 @@ namespace AdaPositions {
       if (selectedNode == null) return;
       if (selectedNode.ImageIndex == (int)II.RootFolder) {
         if (_addressService?.StakesNode == selectedNode) {
-          miGetAddressesForStake.Visible = false;
-          miResyncStake.Visible = true;
-          miResync.Visible = true;
+          miGetAddressesForStake.Visible = true;
+          miResyncStakeAddr.Visible = true;
+          miResyncTotals.Visible = true;
           miRemove.Visible = false;
           miResyncAssets.Visible = false;
         } else if (_addressService?.AssetsNode == selectedNode) {
           miGetAddressesForStake.Visible = false;
-          miResyncStake.Visible = false;
-          miResync.Visible = true;
+          miResyncStakeAddr.Visible = false;
+          miResyncTotals.Visible = false;
           miRemove.Visible = false;
           miResyncAssets.Visible = true;
         }
       } else if (selectedNode.ImageIndex == (int)II.StakeAddress) {
         miGetAddressesForStake.Visible = true;
-        miResyncStake.Visible = true;
-        miResync.Visible = false;
+        miResyncStakeAddr.Visible = true;
+        miResyncTotals.Visible = true;
         miRemove.Visible = false;
         miResyncAssets.Visible = true;
 
       } else if (selectedNode.ImageIndex == (int)II.Address) {
         miGetAddressesForStake.Visible = false;
-        miResyncStake.Visible = false;
-        miResync.Visible = true;
+        miResyncStakeAddr.Visible = false;
+        miResyncTotals.Visible = true;
         miRemove.Visible = true;
         miResyncAssets.Visible = true;
-
       }
 
     }
@@ -276,7 +275,13 @@ namespace AdaPositions {
     private void miGetAddressesForStake_Click(object sender, EventArgs e) {
       TreeNode selectedNode = tvExplore.SelectedNode;
       if (selectedNode == null) return;
-      if (selectedNode.ImageIndex == (int)II.StakeAddress) {
+      if (selectedNode.ImageIndex == (int)II.RootFolder) {
+        if (selectedNode == _addressService!.StakesNode) {
+          _addressService!.Stakes.Values.ToList().ForEach(x => {
+            _addressService!.ScheduleToDo(Ot.GetStakeAddresses, x.StakeAddress, null, 1);
+          });
+        } 
+      } else if (selectedNode.ImageIndex == (int)II.StakeAddress) {
         var stakeAddress = selectedNode.Text;
         var aStake = _addressService!.Stakes.StakeAddressModel(stakeAddress);
         if (aStake != null) {
@@ -304,7 +309,7 @@ namespace AdaPositions {
       }
     }
 
-    private void miResyncStake_Click(object sender, EventArgs e) {
+    private void miResyncStakeAddr_Click(object sender, EventArgs e) {
       TreeNode selectedNode = tvExplore.SelectedNode;
       if (selectedNode == null) return;
       if (selectedNode.ImageIndex == (int)II.StakeAddress) {
@@ -312,14 +317,30 @@ namespace AdaPositions {
         if (stakeAddrModel == null) return;
         foreach (var aAddress in stakeAddrModel.Addresses!.Values) {
           _addressService!.ScheduleToDo(Ot.GetAddressAmounts, stakeAddrModel.StakeAddress, aAddress, 1);
-        }        
+        }
+        if (!Processing) Processing = true;
       }
     }
-
-    private void miResync_Click(object sender, EventArgs e) {
+    private void miResyncTotals_Click(object sender, EventArgs e) {  
       TreeNode selectedNode = tvExplore.SelectedNode;
       if (selectedNode == null) return;
-      if (selectedNode.ImageIndex == (int)II.Address) {
+      if (selectedNode.ImageIndex == (int)II.RootFolder) { 
+        if (selectedNode == _addressService!.StakesNode) {
+          foreach (var aStake in _addressService.Stakes.Values) {
+            foreach (var aAddress in aStake.Addresses!.Values) {
+              _addressService!.ScheduleToDo(Ot.GetAddressAmounts, aStake.StakeAddress, aAddress, 1);
+            }
+          }
+        }
+        if (!Processing) Processing = true;
+      } else if (selectedNode.ImageIndex == (int)II.StakeAddress) {
+        var stakeAddrModel = _addressService!.Stakes.StakeAddressModel(selectedNode.Text);
+        if (stakeAddrModel == null) return;
+        foreach (var aAddress in stakeAddrModel.Addresses!.Values) {
+          _addressService!.ScheduleToDo(Ot.GetAddressAmounts, stakeAddrModel.StakeAddress, aAddress, 1);
+        }
+        if (!Processing) Processing = true;
+      } else if (selectedNode.ImageIndex == (int)II.Address) {
         var stakeAddrModel = _addressService!.Stakes.StakeAddressModel(selectedNode.Parent.Text);
         if (stakeAddrModel == null) return;
         var aAddress = stakeAddrModel.Addresses!.AddressModel(selectedNode.Text);
@@ -328,27 +349,28 @@ namespace AdaPositions {
           if (!Processing) Processing = true;
         }
       }
+
     }
 
     private void miResyncAssets_Click(object sender, EventArgs e) {
       TreeNode selectedNode = tvExplore.SelectedNode;
       if (selectedNode == null) return;
       if (selectedNode.ImageIndex == (int)II.RootFolder) {
-        
-          foreach (var aAsset in _assetsService!.Assets.Values) {
-            if (aAsset.Quantity.AsLong() > 0) {
-              var asset = _assetsService!.Assets.FindByUnit(aAsset.AssetName);
-              if (asset == null) {
-                _addressService!.ScheduleToDo(Ot.GetAssetDetails, aAsset.PolicyId+aAsset.AssetName, null, 1);
-              }
+
+        foreach (var aAsset in _assetsService!.Assets.Values) {
+          if (aAsset.Quantity.AsLong() > 0) {
+            var asset = _assetsService!.Assets.FindByUnit(aAsset.AssetName);
+            if (asset == null) {
+              _addressService!.ScheduleToDo(Ot.GetAssetDetails, aAsset.PolicyId + aAsset.AssetName, null, 1);
             }
           }
-        
+        }
+
       }
       if (selectedNode.ImageIndex == (int)II.StakeAddress) {
         var stakeAddrModel = _addressService!.Stakes.StakeAddressModel(selectedNode.Text);
         if (stakeAddrModel == null) return;
-        foreach(var aAddress in stakeAddrModel.Addresses!.Values) {
+        foreach (var aAddress in stakeAddrModel.Addresses!.Values) {
           foreach (var aAmount in aAddress.AddressAmounts) {
             var asset = _assetsService!.Assets.FindByUnit(aAmount.Value.Unit);
             if (asset == null) {            
@@ -386,70 +408,151 @@ namespace AdaPositions {
         var aAddress = stakeAddrModel.Addresses!.AddressModel(selectedNode.Text);
         if (aAddress == null) return;
         tbMain.Text = AddressTotals(aAddress);
-      } else if (selectedNode.ImageIndex == (int)II.Asset) { 
+      } else if (selectedNode.ImageIndex == (int)II.Asset) {
         tbMain.Text = AssetDetails(selectedNode.Text);
       }
     }
 
     private string AllStakesTotals() {
-      return "";
+      string aStr = "";
+      Amounts amountTotals = new Amounts();
+      Addresses uniqueAddress = new Addresses(_addressService!);
+      aStr = aStr + $"{ss.Nl}All Stakes Totals:{ss.Nl}";
+      _addressService!.Stakes.Values.ToList().ForEach( stake => {      
+        stake.Addresses!.Values.ToList().ForEach(x => {
+          try {
+            x.AddressAmounts!.Values.ToList().ForEach(y => {
+              try {
+                if (y.Quantity.AsLong() > 0) {
+                  amountTotals.Add(y);
+                  if (!uniqueAddress.ContainsKey(x.Id)) {
+                    uniqueAddress[x.Id] = x;
+                  }
+                }
+              } catch (Exception ex) {
+                LogMsg(ex.Message);
+              }
+            });
+          } catch (Exception ex) {
+            LogMsg(ex.Message);
+          }          
+        });
+      });
+      foreach (var addrId in uniqueAddress.Keys) {
+        aStr = aStr + $"Address: {uniqueAddress[addrId].Address}{ss.Nl}";
+      }
+
+      aStr = aStr + $"{ss.Nl}Total Ada: {amountTotals.GetTotalAda()}{ss.Nl}";
+
+      foreach (var y in amountTotals.Values) {
+        try {
+          if (y.Quantity.AsLong() > 0 && y.Unit != "lovelace") {
+            var asset = _assetsService!.Assets.FindByUnit(y.Unit);
+            var unit = y?.Unit ?? "Missing Unit";
+            var quantity = _assetsService!.AsFormatedQuantity(y);
+            if (asset != null) {
+              unit = asset.AssetName.AsHexToUtf8();
+              aStr = aStr + $"{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            } else {
+              aStr = aStr + $"{ss.Nl}Asset missing{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            }
+          }
+        } catch (Exception ex) {
+          LogMsg(ex.Message);
+        }        
+      }
+      return aStr;      
     }
 
     private string StakeTotals(StakeAddressModel stake) {
       string aStr = "";
       Amounts amountTotals = new Amounts();
-      stake.Addresses!.Values.ToList().ForEach(x => {
+      Addresses uniqueAddress = new Addresses(_addressService!);
+      aStr = aStr + $"{ss.Nl}StakeAddress: {stake.StakeAddress}{ss.Nl}";
+      stake.Addresses!.Values.ToList().ForEach(x => { 
         x.AddressAmounts!.Values.ToList().ForEach(y => {
-          if (y.Quantity.AsLong() > 0) {
-            amountTotals.Add(y);
-            var asset = _assetsService!.Assets.FindByUnit(y.Unit);            
-            if (asset != null) {
-              var unit = asset.AssetName.AsHexToUtf8();
-              var quantity = _assetsService!.AsFormatedQuantity(y);
-              aStr = aStr + $"{ss.Nl}  Unit: {unit}{ss.Nl}  Quantity:{quantity}{ss.Nl}";
-            } else {
-              aStr = aStr + $"{ss.Nl}  Need to sync Asset.";
+          try {
+            if (y.Quantity.AsLong() > 0) {
+              amountTotals.Add(y);
+              if (!uniqueAddress.ContainsKey(x.Id)) {
+                uniqueAddress[x.Id] = x;
+              }
             }
-          }
+          } catch (Exception ex) {
+            LogMsg(ex.Message);
+          }                    
         });
       });
-
-      return amountTotals.Count() > 0 ? aStr : " strOpParam1 Empty.";
+      foreach(var addrId in uniqueAddress.Keys ) {
+        aStr = aStr + $"Address: {uniqueAddress[addrId].Address}{ss.Nl}";
+      }
+      aStr = aStr + $"{ss.Nl}Total Ada: {amountTotals.GetTotalAda()}{ss.Nl}";      
+      foreach(var y in amountTotals.Values) { 
+        try {
+          if (y.Quantity.AsLong() > 0 && y.Unit != "lovelace") {
+            var asset = _assetsService!.Assets.FindByUnit(y.Unit);
+            var unit = y.Unit;
+            var quantity = _assetsService!.AsFormatedQuantity(y);
+            if (asset != null) {
+              unit = asset.AssetName.AsHexToUtf8();
+              aStr = aStr + $"{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            } else {
+              aStr = aStr + $"{ss.Nl}Asset missing{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            }
+          }
+        } catch (Exception ex) {
+          LogMsg(ex.Message);
+        }        
+      }
+      return aStr;
     }
 
     private string AddressTotals(AddressModel address) {
       string aStr = "";
+      aStr = aStr + $"Address: {address.Address}{ss.Nl}";
       Amounts amountTotals = new Amounts();
       address.AddressAmounts!.Values.ToList().ForEach(x => {
-        if (x.Quantity.AsLong() > 0) {
-          var asset = _assetsService!.Assets.FindByUnit(x.Unit);
-          string unit = x.Unit;
-          string quantity = x.Quantity;
-          if (asset != null) {
-             unit = asset.AssetName.AsHexToUtf8();
-             quantity = _assetsService!.AsFormatedQuantity(x);
-             aStr = aStr + $"{ss.Nl}  Unit: {unit}{ss.Nl}  Quantity:{quantity}{ss.Nl}";
-          } else { 
-            aStr = aStr + $"{ss.Nl}  Need to sync Asset.";
+        try {
+          if (x.Quantity.AsLong() > 0) {
+            amountTotals.Add(x);
           }
-          amountTotals.Add(x);           
-        }
+        } catch (Exception ex) {
+          LogMsg(ex.Message);
+        }        
       });
-      return amountTotals.Count() > 0 ? aStr : " Address Empty.";
+      aStr = aStr + $"{ss.Nl}Total Ada: {amountTotals.GetTotalAda()}{ss.Nl}";
+      foreach (var y in amountTotals.Values) {
+        try {
+          if (y.Quantity.AsLong() > 0 && y.Unit != "lovelace") {
+            var asset = _assetsService!.Assets.FindByUnit(y.Unit);
+            var unit = y.Unit;
+            var quantity = _assetsService!.AsFormatedQuantity(y);
+            if (asset != null) {
+              unit = asset.AssetName.AsHexToUtf8();
+              aStr = aStr + $"{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            } else {
+              aStr = aStr + $"{ss.Nl}Asset missing{ss.Nl} Unit: {unit}{ss.Nl} Quantity:{quantity}{ss.Nl}";
+            }
+          }
+        } catch (Exception ex) {
+          LogMsg(ex.Message);
+        }        
+      }
+      return aStr;
     }
 
     private string AssetDetails(string assetFingerprint) {
       Assets assets = _assetsService!.Assets;
-      var asset =  assets.FindByFingerPrint(assetFingerprint);
+      var asset = assets.FindByFingerPrint(assetFingerprint);
       if (asset == null) return " Asset not found. ";
-      return $"{ss.Nl}  Asset: {asset.AssetName}{ss.Nl}"+
-        $"  PolicyId: {asset.PolicyId}{ss.Nl}"+
-        $"  AssetName: {asset.AssetName.AsHexToUtf8()} {asset.AssetName}{ss.Nl}"+
-        $"  FingerPrint: {asset.FingerPrint}{ss.Nl}"+
-        $"  Quantity: {asset.Quantity}{ss.Nl}"+
-        $"  Decimals: {asset.Decimals}{ss.Nl}"+
-        $"  Name: {asset.Name}{ss.Nl}"+
-        $"  Ticker: {asset.Ticker}{ss.Nl}"+
+      return $"{ss.Nl}  Asset: {asset.AssetName}{ss.Nl}" +
+        $"  PolicyId: {asset.PolicyId}{ss.Nl}" +
+        $"  AssetName: {asset.AssetName.AsHexToUtf8()} {asset.AssetName}{ss.Nl}" +
+        $"  FingerPrint: {asset.FingerPrint}{ss.Nl}" +
+        $"  Quantity: {asset.Quantity}{ss.Nl}" +
+        $"  Decimals: {asset.Decimals}{ss.Nl}" +
+        $"  Name: {asset.Name}{ss.Nl}" +
+        $"  Ticker: {asset.Ticker}{ss.Nl}" +
         $"  Url: {asset.Url}{ss.Nl} {ss.Nl}";
     }
 
@@ -469,7 +572,7 @@ namespace AdaPositions {
       LoadtvExplore();
     }
 
-    
+
   }
 
   public static class ss { 
